@@ -41,9 +41,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
         self.mac_address = entry.data[CONF_MAC_ADDRESS]
         self.device_name = entry.data[CONF_NAME]
         
-        # Get configuration options
         self._scan_interval = entry.options.get("scan_interval", DEFAULT_SCAN_INTERVAL)
-        self._connection_timeout = entry.options.get("connection_timeout", CONNECTION_TIMEOUT)
         self._max_retries = entry.options.get("retry_attempts", MAX_RETRIES)
         
         self._connection_manager = None
@@ -52,7 +50,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
         self._command_lock = asyncio.Lock()
         self._retry_count = 0
         
-        # Device state tracking
         self._state = {
             "is_on": False,
             "brightness": 255,
@@ -124,7 +121,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
             else:
                 raise UpdateFailed(f"Failed to connect to device after {self._max_retries} attempts")
         
-        # Since the library doesn't provide state reading, we return our tracked state
         return self._state.copy()
 
     async def _async_send_command(self, command_func, *args, **kwargs) -> bool:
@@ -135,18 +131,20 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
                 return False
             
             try:
+                # The library methods now handle the sending internally
                 await command_func(*args, **kwargs)
                 return True
             except Exception as ex:
                 _LOGGER.error("Error sending command: %s", ex)
-                self._connected = False
+                # Don't assume disconnection on every error
+                # self._connected = False
                 return False
 
     # Display control methods
     async def async_turn_on(self) -> bool:
         """Turn on the display."""
         success = await self._async_send_command(
-            Common().turn_on_device
+            Common().screenOn
         )
         if success:
             self._state["is_on"] = True
@@ -156,7 +154,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_turn_off(self) -> bool:
         """Turn off the display."""
         success = await self._async_send_command(
-            Common().turn_off_device
+            Common().screenOff
         )
         if success:
             self._state["is_on"] = False
@@ -166,12 +164,13 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_set_brightness(self, brightness: int) -> bool:
         """Set the display brightness."""
-        # Convert HA brightness (0-255) to device brightness (0-100)
         device_brightness = int((brightness / 255) * 100)
+        # Ensure brightness is within the library's accepted range
+        device_brightness = max(5, min(100, device_brightness))
         
         success = await self._async_send_command(
-            Common().set_brightness,
-            device_brightness
+            Common().setBrightness,
+            brightness_percent=device_brightness
         )
         if success:
             self._state["brightness"] = brightness
@@ -181,8 +180,8 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_set_screen_flip(self, flipped: bool) -> bool:
         """Set screen rotation/flip."""
         success = await self._async_send_command(
-            Common().set_screen_rotation,
-            180 if flipped else 0
+            Common().flipScreen,
+            flip=flipped
         )
         if success:
             self._state["screen_flipped"] = flipped
@@ -193,10 +192,10 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_display_text(self, message: str, font_size: int = 12, color: tuple = (255, 255, 255), speed: int = 50) -> bool:
         """Display text message."""
         success = await self._async_send_command(
-            Text().send_text,
-            message,
+            Text().setMode,
+            text=message,
             font_size=font_size,
-            color=color,
+            text_color=color,
             speed=speed
         )
         if success:
@@ -209,12 +208,11 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_set_clock_mode(self, style: int) -> bool:
         """Set clock display mode."""
         success = await self._async_send_command(
-            Clock().set_clock_style,
-            style
+            Clock().setMode,
+            style=style
         )
         if success:
             self._state["current_mode"] = "clock"
-            # Map style number back to name for state tracking
             style_names = {0: "classic", 1: "digital", 2: "analog", 3: "minimal", 4: "colorful"}
             self._state["clock_style"] = style_names.get(style, "classic")
             self._fire_event("clock_mode_set", {"style": style})
@@ -222,25 +220,30 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_sync_time(self) -> bool:
         """Synchronize device time with Home Assistant."""
-        current_time = datetime.now()
+        now = datetime.now()
         success = await self._async_send_command(
-            Clock().sync_time,
-            current_time
+            Common().setTime,
+            year=now.year,
+            month=now.month,
+            day=now.day,
+            hour=now.hour,
+            minute=now.minute,
+            second=now.second
         )
         return success
 
     # Effect methods
     async def async_display_effect(self, effect_type: int, duration: int = 10, speed: int = 50) -> bool:
         """Display visual effect."""
+        # The new library has a different signature. We'll use a default color list.
+        default_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
         success = await self._async_send_command(
-            Effect().show_effect,
-            effect_type,
-            duration=duration,
-            speed=speed
+            Effect().setMode,
+            style=effect_type,
+            rgb_values=default_colors
         )
         if success:
             self._state["current_mode"] = "effect"
-            # Map effect number back to name for state tracking
             effect_names = {0: "rainbow", 1: "breathing", 2: "wave", 3: "fire", 4: "snow", 5: "matrix", 6: "stars", 7: "plasma"}
             self._state["effect_mode"] = effect_names.get(effect_type, "rainbow")
             self._fire_event("effect_displayed", {"effect_type": effect_type})
@@ -249,8 +252,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     # Image display methods
     async def async_display_image(self, image_path: str, duration: int = 5) -> bool:
         """Display an image or GIF."""
-        # This would need to be implemented based on the actual library capabilities
-        # For now, just track the state
+        _LOGGER.warning("Displaying images from a path is not yet supported by the library.")
         self._state["current_mode"] = "image"
         self._fire_event("image_displayed", {"image_path": image_path})
         return True
@@ -259,7 +261,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_start_chronograph(self) -> bool:
         """Start the chronograph."""
         success = await self._async_send_command(
-            Chronograph().start
+            Chronograph().setMode, mode=1
         )
         if success:
             self._state["current_mode"] = "chronograph"
@@ -269,7 +271,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_stop_chronograph(self) -> bool:
         """Stop the chronograph."""
         success = await self._async_send_command(
-            Chronograph().stop
+            Chronograph().setMode, mode=2  # Corresponds to pause
         )
         if success:
             self._fire_event("chronograph_stopped")
@@ -278,7 +280,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_reset_chronograph(self) -> bool:
         """Reset the chronograph."""
         success = await self._async_send_command(
-            Chronograph().reset
+            Chronograph().setMode, mode=0
         )
         if success:
             self._fire_event("chronograph_reset")
@@ -287,17 +289,16 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_freeze_screen(self) -> bool:
         """Freeze the current display."""
         success = await self._async_send_command(
-            Common().freeze_screen
+            Common().freezeScreen
         )
         return success
 
     async def async_reset_device(self) -> bool:
         """Reset the device."""
         success = await self._async_send_command(
-            Common().reset_device
+            Common().reset
         )
         if success:
-            # Reset state to defaults
             self._state.update({
                 "is_on": True,
                 "brightness": 255,
