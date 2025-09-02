@@ -13,8 +13,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up iDotMatrix from a config entry."""
     coordinator = IDotMatrixDataUpdateCoordinator(hass, entry)
 
-    if not await coordinator.async_connect():
-        raise ConfigEntryNotReady(f"Failed to connect to iDotMatrix device at {entry.data['mac_address']}")
+    await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
