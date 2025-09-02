@@ -86,12 +86,21 @@ class IDotMatrixConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             devices = await connection_manager.scan()
             
             self._discovered_devices = []
-            for device in devices:
-                self._discovered_devices.append({
-                    "name": device.name or f"iDotMatrix {device.address[-5:]}",
-                    "mac_address": device.address,
-                    "rssi": getattr(device, "rssi", None),
-                })
+            if isinstance(devices, dict):
+                for mac, name in devices.items():
+                    self._discovered_devices.append({
+                        "name": name or f"iDotMatrix {mac[-5:]}",
+                        "mac_address": mac,
+                        "rssi": None,
+                    })
+            else:
+                for device in devices:
+                    if hasattr(device, "address"):
+                        self._discovered_devices.append({
+                            "name": getattr(device, "name", None) or f"iDotMatrix {device.address[-5:]}",
+                            "mac_address": device.address,
+                            "rssi": getattr(device, "rssi", None),
+                        })
             
             if not self._discovered_devices:
                 errors["base"] = "no_devices_found"
