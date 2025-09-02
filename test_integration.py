@@ -23,11 +23,6 @@ sys.modules['homeassistant.components.button'] = MagicMock()
 
 # Mock the iDotMatrix library
 sys.modules['idotmatrix'] = MagicMock()
-sys.modules['idotmatrix.common'] = MagicMock()
-sys.modules['idotmatrix.text'] = MagicMock()
-sys.modules['idotmatrix.clock'] = MagicMock()
-sys.modules['idotmatrix.effects'] = MagicMock()
-sys.modules['idotmatrix.chronograph'] = MagicMock()
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)

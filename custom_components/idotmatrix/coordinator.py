@@ -19,6 +19,14 @@ from .const import (
     MAX_RETRIES,
     RECONNECT_INTERVAL,
 )
+from idotmatrix import (
+    Chronograph,
+    Clock,
+    Common,
+    ConnectionManager,
+    Effects,
+    Text,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,8 +84,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_connect(self) -> bool:
         """Connect to the device."""
         try:
-            from idotmatrix import ConnectionManager
-            
             self._connection_manager = ConnectionManager()
             await self._connection_manager.connectByAddress(self.mac_address)
             self._device = self._connection_manager.client
@@ -136,10 +142,9 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
                 self._connected = False
                 return False
 
-    # Display control methods    async def async_turn_on(self) -> bool:
+    # Display control methods
+    async def async_turn_on(self) -> bool:
         """Turn on the display."""
-        from idotmatrix.common import Common
-        
         success = await self._async_send_command(
             Common(self._device).turn_on_device
         )
@@ -150,8 +155,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_turn_off(self) -> bool:
         """Turn off the display."""
-        from idotmatrix.common import Common
-        
         success = await self._async_send_command(
             Common(self._device).turn_off_device
         )
@@ -163,8 +166,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_set_brightness(self, brightness: int) -> bool:
         """Set the display brightness."""
-        from idotmatrix.common import Common
-        
         # Convert HA brightness (0-255) to device brightness (0-100)
         device_brightness = int((brightness / 255) * 100)
         
@@ -179,8 +180,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_set_screen_flip(self, flipped: bool) -> bool:
         """Set screen rotation/flip."""
-        from idotmatrix.common import Common
-        
         success = await self._async_send_command(
             Common(self._device).set_screen_rotation,
             180 if flipped else 0
@@ -193,8 +192,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     # Text display methods
     async def async_display_text(self, message: str, font_size: int = 12, color: tuple = (255, 255, 255), speed: int = 50) -> bool:
         """Display text message."""
-        from idotmatrix.text import Text
-        
         success = await self._async_send_command(
             Text(self._device).send_text,
             message,
@@ -211,8 +208,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     # Clock methods
     async def async_set_clock_mode(self, style: int) -> bool:
         """Set clock display mode."""
-        from idotmatrix.clock import Clock
-        
         success = await self._async_send_command(
             Clock(self._device).set_clock_style,
             style
@@ -227,8 +222,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_sync_time(self) -> bool:
         """Synchronize device time with Home Assistant."""
-        from idotmatrix.clock import Clock
-        
         current_time = datetime.now()
         success = await self._async_send_command(
             Clock(self._device).sync_time,
@@ -239,8 +232,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     # Effect methods
     async def async_display_effect(self, effect_type: int, duration: int = 10, speed: int = 50) -> bool:
         """Display visual effect."""
-        from idotmatrix.effects import Effects
-        
         success = await self._async_send_command(
             Effects(self._device).show_effect,
             effect_type,
@@ -256,7 +247,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
         return success
 
     # Image display methods
-    async def async_display_image(self, image_path: str, duration: int = 5) -> bool:
+    async def async__display_image(self, image_path: str, duration: int = 5) -> bool:
         """Display an image or GIF."""
         # This would need to be implemented based on the actual library capabilities
         # For now, just track the state
@@ -267,8 +258,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     # Chronograph methods
     async def async_start_chronograph(self) -> bool:
         """Start the chronograph."""
-        from idotmatrix.chronograph import Chronograph
-        
         success = await self._async_send_command(
             Chronograph(self._device).start
         )
@@ -279,8 +268,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_stop_chronograph(self) -> bool:
         """Stop the chronograph."""
-        from idotmatrix.chronograph import Chronograph
-        
         success = await self._async_send_command(
             Chronograph(self._device).stop
         )
@@ -290,8 +277,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_reset_chronograph(self) -> bool:
         """Reset the chronograph."""
-        from idotmatrix.chronograph import Chronograph
-        
         success = await self._async_send_command(
             Chronograph(self._device).reset
         )
@@ -301,8 +286,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_freeze_screen(self) -> bool:
         """Freeze the current display."""
-        from idotmatrix.common import Common
-        
         success = await self._async_send_command(
             Common(self._device).freeze_screen
         )
@@ -310,8 +293,6 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_reset_device(self) -> bool:
         """Reset the device."""
-        from idotmatrix.common import Common
-        
         success = await self._async_send_command(
             Common(self._device).reset_device
         )
