@@ -80,7 +80,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
             
             self._connection_manager = ConnectionManager()
             self._device = await self._connection_manager.connect(
-                self.mac_address, timeout=self._connection_timeout
+                self.mac_address
             )
             
             if self._device:
