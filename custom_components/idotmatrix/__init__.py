@@ -6,10 +6,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import DOMAIN, PLATFORMS
-from .coordinator import IDotMatrixDataUpdateCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    from .coordinator import IDotMatrixDataUpdateCoordinator
     """Set up iDotMatrix from a config entry."""
     coordinator = IDotMatrixDataUpdateCoordinator(hass, entry)
 

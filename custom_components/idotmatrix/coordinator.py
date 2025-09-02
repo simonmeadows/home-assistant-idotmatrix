@@ -24,7 +24,7 @@ from idotmatrix import (
     Clock,
     Common,
     ConnectionManager,
-    Effects,
+    Effect,
     Text,
 )
 
@@ -233,7 +233,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_display_effect(self, effect_type: int, duration: int = 10, speed: int = 50) -> bool:
         """Display visual effect."""
         success = await self._async_send_command(
-            Effects(self._device).show_effect,
+            Effect(self._device).show_effect,
             effect_type,
             duration=duration,
             speed=speed
@@ -247,7 +247,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
         return success
 
     # Image display methods
-    async def async__display_image(self, image_path: str, duration: int = 5) -> bool:
+    async def async_display_image(self, image_path: str, duration: int = 5) -> bool:
         """Display an image or GIF."""
         # This would need to be implemented based on the actual library capabilities
         # For now, just track the state
