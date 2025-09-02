@@ -79,9 +79,8 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
             from idotmatrix import ConnectionManager
             
             self._connection_manager = ConnectionManager()
-            self._device = await self._connection_manager.connect(
-                self.mac_address
-            )
+            await self._connection_manager.connectByAddress(self.mac_address)
+            self._device = self._connection_manager.client
             
             if self._device:
                 self._connected = True
