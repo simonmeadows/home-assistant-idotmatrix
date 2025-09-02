@@ -146,7 +146,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_turn_on(self) -> bool:
         """Turn on the display."""
         success = await self._async_send_command(
-            Common(self._device).turn_on_device
+            Common().turn_on_device
         )
         if success:
             self._state["is_on"] = True
@@ -156,7 +156,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_turn_off(self) -> bool:
         """Turn off the display."""
         success = await self._async_send_command(
-            Common(self._device).turn_off_device
+            Common().turn_off_device
         )
         if success:
             self._state["is_on"] = False
@@ -170,7 +170,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
         device_brightness = int((brightness / 255) * 100)
         
         success = await self._async_send_command(
-            Common(self._device).set_brightness,
+            Common().set_brightness,
             device_brightness
         )
         if success:
@@ -181,7 +181,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_set_screen_flip(self, flipped: bool) -> bool:
         """Set screen rotation/flip."""
         success = await self._async_send_command(
-            Common(self._device).set_screen_rotation,
+            Common().set_screen_rotation,
             180 if flipped else 0
         )
         if success:
@@ -193,7 +193,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_display_text(self, message: str, font_size: int = 12, color: tuple = (255, 255, 255), speed: int = 50) -> bool:
         """Display text message."""
         success = await self._async_send_command(
-            Text(self._device).send_text,
+            Text().send_text,
             message,
             font_size=font_size,
             color=color,
@@ -209,7 +209,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_set_clock_mode(self, style: int) -> bool:
         """Set clock display mode."""
         success = await self._async_send_command(
-            Clock(self._device).set_clock_style,
+            Clock().set_clock_style,
             style
         )
         if success:
@@ -224,7 +224,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
         """Synchronize device time with Home Assistant."""
         current_time = datetime.now()
         success = await self._async_send_command(
-            Clock(self._device).sync_time,
+            Clock().sync_time,
             current_time
         )
         return success
@@ -233,7 +233,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_display_effect(self, effect_type: int, duration: int = 10, speed: int = 50) -> bool:
         """Display visual effect."""
         success = await self._async_send_command(
-            Effect(self._device).show_effect,
+            Effect().show_effect,
             effect_type,
             duration=duration,
             speed=speed
@@ -259,7 +259,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_start_chronograph(self) -> bool:
         """Start the chronograph."""
         success = await self._async_send_command(
-            Chronograph(self._device).start
+            Chronograph().start
         )
         if success:
             self._state["current_mode"] = "chronograph"
@@ -269,7 +269,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_stop_chronograph(self) -> bool:
         """Stop the chronograph."""
         success = await self._async_send_command(
-            Chronograph(self._device).stop
+            Chronograph().stop
         )
         if success:
             self._fire_event("chronograph_stopped")
@@ -278,7 +278,7 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_reset_chronograph(self) -> bool:
         """Reset the chronograph."""
         success = await self._async_send_command(
-            Chronograph(self._device).reset
+            Chronograph().reset
         )
         if success:
             self._fire_event("chronograph_reset")
@@ -287,14 +287,14 @@ class IDotMatrixDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_freeze_screen(self) -> bool:
         """Freeze the current display."""
         success = await self._async_send_command(
-            Common(self._device).freeze_screen
+            Common().freeze_screen
         )
         return success
 
     async def async_reset_device(self) -> bool:
         """Reset the device."""
         success = await self._async_send_command(
-            Common(self._device).reset_device
+            Common().reset_device
         )
         if success:
             # Reset state to defaults
