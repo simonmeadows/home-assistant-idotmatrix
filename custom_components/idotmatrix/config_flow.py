@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 import voluptuous as vol
@@ -19,6 +20,7 @@ from .const import (
     MAX_RETRIES,
     DEFAULT_SCAN_INTERVAL,
 )
+from idotmatrix import ConnectionManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,17 +82,15 @@ class IDotMatrixConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 return await self.async_step_manual()        # Scan for devices
         try:
-            from idotmatrix import ConnectionManager
-            
             connection_manager = ConnectionManager()
             devices = await connection_manager.scan()
             
             self._discovered_devices = []
-            for device in devices:
+            for mac_address in devices:
                 self._discovered_devices.append({
-                    "name": device.name or f"iDotMatrix {device.address[-5:]}",
-                    "mac_address": device.address,
-                    "rssi": getattr(device, "rssi", None),
+                    "name": f"iDotMatrix {mac_address.split(':')[-1]}",
+                    "mac_address": mac_address,
+                    "rssi": None,  # RSSI is not provided by the scan
                 })
             
             if not self._discovered_devices:
@@ -181,7 +181,6 @@ class IDotMatrixConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def _is_valid_mac_address(self, mac: str) -> bool:
         """Validate MAC address format."""
-        import re
         pattern = re.compile(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
         return bool(pattern.match(mac))
 
